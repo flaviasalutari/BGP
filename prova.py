@@ -5,8 +5,7 @@ import socket
 import struct
 import select
 import random
-import asyncore
-import base64
+
 # From /usr/include/linux/icmp.h; your milage may vary.
 ICMP_ECHO_REQUEST = 13 # Seems to be the same on Solaris.
 
@@ -45,18 +44,21 @@ def checksum(source_string):
 
 
 def create_packet(id):
-    """Create a new echo request packet based on the given "id"."""
-    # Header is type (8), code (8), checksum (16), id (16), sequence (16)
-    header = struct.pack('bbHHh', ICMP_ECHO_REQUEST, 0, 0, id, 1 )
-    data = 192 * 'Q'
-    # Calculate the checksum on the data and the dummy header.
-    my_checksum = checksum(header + data)
-    # Now that we have the right checksum, we put that in. It's just easier
-    # to make up a new header than to stuff it into the dummy.
-    header = struct.pack('bbHHh', ICMP_ECHO_REQUEST, 0,
-                         socket.htons(my_checksum), id, 1)
-    return header + data
-
+	"""Create a new echo request packet based on the given "id"."""
+	# Header is type (8), code (8), checksum (16), id (16), sequence (16)
+	from datetime import datetime, time
+	utcnow = datetime.utcnow()
+	midnight_utc = datetime.combine(utcnow.date(), time(0))
+	delta = utcnow - midnight_utc
+	header = struct.pack('bbHHhIII', ICMP_ECHO_REQUEST, 0, 0, id, 1, int(delta.total_seconds()) * 1000, int(delta.total_seconds()) * 1000,int(delta.total_seconds()) * 1000) #current timestamp
+	data = 180 * 'Q'
+	# Calculate the checksum on the data and the dummy header.
+	my_checksum = checksum(header + data)
+	# Now that we have the right checksum, we put that in. It's just easier
+	# to make up a new header than to stuff it into the dummy.
+	header = struct.pack('bbHHhIII', ICMP_ECHO_REQUEST, 0,
+	                     socket.htons(my_checksum), id, 1, int(delta.total_seconds()) * 1000, int(delta.total_seconds()) * 1000,int(delta.total_seconds()) * 1000)
+	return header + data
 
 def do_one(dest_addr, timeout=1):
     """
@@ -85,7 +87,7 @@ def do_one(dest_addr, timeout=1):
         # below expects it, so we just give it a dummy port.
         sent = my_socket.sendto(packet, (dest_addr, 1))
         packet = packet[sent:]
-    # delay = receive_ping(my_socket, packet_id, time.time(), timeout)
+    delay = receive_ping(my_socket, packet_id, time.time(), timeout)
     my_socket.close()
     return delay
 
@@ -113,33 +115,9 @@ def receive_ping(my_socket, packet_id, time_sent, timeout):
 		print "Originate " + str(originate)
 		print "Received " + str(received)
 		print "transmit " + str(transmit)
-
-		# print "transmit " + str(transmit)
-        # print rec_packet.encode('hex')
-
-		# icmp_header = rec_packet[32:36]
-		# t2 = struct.unpack('>I', icmp_header)
-		# print t2
-        #     'bbHHh', icmp_header)
-        # print icmp_header
-        # print int(icmp_header, 8)
-        
-        # t1  = struct.unpack('I',icmp_header)
-        # print "t1   " + hex(t1)
-
-        # type, code, checksum, p_id, sequence, primo_time = struct.unpack(
-        #     'bbHHh', icmp_header)
-        # print "type : " + str(type)
-        # print "time : " + str(primo_time)
-
-        # if p_id == packet_id:
-        #     return time_received - time_sent
-        # time_left -= time_received - time_sent
-        # if time_left <= 0:
-        #     return
         return
 
-def verbose_ping(dest_addr, timeout=2, count=4):
+def verbose_ping(dest_addr, timeout=2, count=10):
     """
     Sends one ping to the given "dest_addr" which can be an ip or hostname.
     "timeout" can be any integer or float except negatives and zero.
@@ -161,7 +139,7 @@ def verbose_ping(dest_addr, timeout=2, count=4):
 
 
 
-# if __name__ == '__main__':
-#     # Testing
+if __name__ == '__main__':
+    # Testing
 
-#     verbose_ping('64.137.245.229')
+    verbose_ping('64.137.245.229')
