@@ -153,22 +153,29 @@ def do_one(dest_addr, timeout=1):
 
 def receive_ping(my_socket, packet_id, time_sent, timeout):
     # Receive the ping from the socket.
-    time_left = timeout
-    while True:
-        started_select = time.time()
-        ready = select.select([my_socket], [], [], time_left)
-        how_long_in_select = time.time() - started_select
-        if ready[0] == []: # Timeout
-            return
-        time_received = time.time()
-        rec_packet, addr = my_socket.recvfrom(1024)
-        icmp_header = rec_packet[28:36]
+	time_left = timeout
+	while True:
+		started_select = time.time()
+		ready = select.select([my_socket], [], [], time_left)
+		how_long_in_select = time.time() - started_select
+		if ready[0] == []: # Timeout
+			return
+		time_received = time.time()
+		rec_packet, addr = my_socket.recvfrom(1024)
+
+        # print rec_packet.encode('hex')
+		icmp_header = rec_packet[28:32]
+		t1 = struct.unpack('>I', icmp_header)
+		print t1
+		icmp_header = rec_packet[32:36]
+		t2 = struct.unpack('>I', icmp_header)
+		print t2
+        #     'bbHHh', icmp_header)
         # print icmp_header
-        print "ICMP header " + str(icmp_header)
+        # print int(icmp_header, 8)
         
-        t1, t2  = struct.unpack('<LL',icmp_header)
-        print "t1   " + str(t1)
-        print "t2   " + str(t2)
+        # t1  = struct.unpack('I',icmp_header)
+        # print "t1   " + hex(t1)
 
         # type, code, checksum, p_id, sequence, primo_time = struct.unpack(
         #     'bbHHh', icmp_header)
