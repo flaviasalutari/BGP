@@ -11,14 +11,14 @@ import ctypes
 class ICMP(ctypes.Structure):
 
     _fields_ = [
-    ('type',        ctypes.c_ubyte),
-    ('code',        ctypes.c_ubyte),
+    ('type',        ctypes.c_byte),
+    ('code',        ctypes.c_byte),
     ('checksum',    ctypes.c_ushort),
     ('identifier',      ctypes.c_ushort),
     ('sequence_number',ctypes.c_short),
-    ('o_timestamp',ctypes.c_ulong),
-    ('rx_timestamp',ctypes.c_ulong),
-    ('tx_timestamp',ctypes.c_ulong)  
+    ('o_timestamp',ctypes.c_uint),
+    ('rx_timestamp',ctypes.c_uint),
+    ('tx_timestamp',ctypes.c_uint)  
     ]
 
     def __new__(self, socket_buffer):
